@@ -1,11 +1,8 @@
 import {NextRequest,NextResponse} from 'next/server';
-import {timingSafeEqual} from 'crypto';
 export const runtime='nodejs';
-function authorized(req:NextRequest){const expected=process.env.SARAH_ACCESS_CODE||'';const given=req.headers.get('x-sarah-access')||'';if(!expected||expected.length<12||!given)return false;const a=Buffer.from(expected),b=Buffer.from(given);return a.length===b.length&&timingSafeEqual(a,b)}
 export async function POST(req:NextRequest){
- if(!authorized(req))return NextResponse.json({error:'ACCESS_REQUIRED'},{status:401});
- const key=process.env.GEMINI_API_KEY;
- if(!key)return NextResponse.json({error:'FREE_AI_NOT_CONFIGURED'},{status:503});
+ const key=req.headers.get('x-gemini-key')||'';
+ if(!/^AIza[0-9A-Za-z_-]{20,}$/.test(key))return NextResponse.json({error:'GEMINI_KEY_REQUIRED'},{status:401});
  try{
  const body=await req.json();const raw=body.messages;
  if(!Array.isArray(raw)||raw.length>16)return NextResponse.json({error:'INVALID_MESSAGES'},{status:400});
